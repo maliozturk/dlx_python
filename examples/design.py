@@ -27,14 +27,17 @@ problem.
 By Sebastian Raaphorst, 2008."""
 
 import sys
+from functools import reduce
+
 import dlx
-import pyncomb
+
+file = open("results.txt", "w")
 
 
 class DesignDLX(dlx.DLX):
     """A DLX representation of a t-(v,k,1) design problem."""
 
-    def __init__(self, t, v, k, fixings=True):
+    def __init__(self, t, v, k, fixings=False):
         """__init__(self, t, v, k, fixings=True):
 
         Create a DLX object representing the problem of finding
@@ -56,10 +59,11 @@ class DesignDLX(dlx.DLX):
         self.k = k
 
         # Populate the columns variable.
-        columns = list(pyncomb.ksubsetlex.all(v,t))
+        columns = list(dlx_python.pyncomb.ksubsetlex.all(v, t))
 
         # Now create the rows, one for each k-set.
-        rows = [[pyncomb.ksubsetlex.rank(v,T) for T in pyncomb.ksubsetlex.all(pyncomb.combfuncs.createLookup(S),t)] for S in pyncomb.ksubsetlex.all(v,k)]
+        rows = [[dlx_python.pyncomb.ksubsetlex.rank(v, T) for T in dlx_python.pyncomb.ksubsetlex.all(
+            dlx_python.pyncomb.combfuncs.createLookup(S), t)] for S in dlx_python.pyncomb.ksubsetlex.all(v, k)]
 
         # Add a field to each column to indicate that it is primary.
         dlx.DLX.__init__(self, [(c,dlx.DLX.PRIMARY) for c in columns])
@@ -77,7 +81,7 @@ class DesignDLX(dlx.DLX):
                 block[t-1:] = range(i*k - (i-1)*t + (i-1), (i+1)*k - i*t + i)
 
                 # Rank it, mark it as used, and store it.
-                r = pyncomb.ksubsetlex.rank(v, block)
+                r = dlx_python.pyncomb.ksubsetlex.rank(v, block)
                 self.fixedBlocks.append(r)
                 self.useRow(self.rowsByLexOrder[r])
                 
@@ -87,23 +91,23 @@ class DesignDLX(dlx.DLX):
             # Now we have the remaining block, namely, the vertical one:
             # 0 ... t-3 t-1 k ... ik-(i-1)t+(i-1) ...
             block[t-2:] = [i*k - (i-1)*t + (i-1) for i in range(k-t+2)]
-            r = pyncomb.ksubsetlex.rank(v, block)
+            r = dlx_python.pyncomb.ksubsetlex.rank(v, block)
             self.fixedBlocks.append(r)
             self.useRow(self.rowsByLexOrder[r])
-
 
     def printSolution(self, solution):
         """Convenience method to display solutions."""
 
         # We need to collapse each row list, which is a collection of t-sets, into its
         # corresponding k-set. This is simply the union of all the t-sets.
-        print [list(set(reduce(lambda x,y:x+y, self.getRowList(i), []))) for i in solution]
+
+        print([list(set(reduce(lambda x,y:x+y, self.getRowList(i), []))) for i in solution])
 
 
 if __name__ == "__main__":
     # Ensure correct command line arguments.
     if len(sys.argv) not in range(4,7):
-        print "Usage: %s t v k [use_fixings=T/*F*] [print_designs=T/*F*]" % sys.argv[0]
+        print("Usage: %s t v k [use_fixings=T/*F*] [print_designs=T/*F*]" % sys.argv[0])
         exit(1)
 
     # Use Psyco to speed things up if it is available.
@@ -114,7 +118,7 @@ if __name__ == "__main__":
         pass
 
     fixflag = False
-    printflag = False
+    printflag = True
     (t,v,k) = map(int, sys.argv[1:4])
     if len(sys.argv) > 4:
         fixflag = (sys.argv[4] == 'T')
@@ -123,10 +127,16 @@ if __name__ == "__main__":
 
     d = DesignDLX(t, v, k, fixflag)
     designlist = list(d.solve())
-    print "*** DONE ***"
-    print "Number of designs found: %d" % len(designlist)
-    if printflag:
-        for design in designlist:
-            d.printSolution(design)
-    print "Nodes per level:", d.statistics.nodes
-    print "Updates per level:", d.statistics.updates
+    print("*** DONE ***")
+    print("Number of designs found: %d" % len(designlist))
+    for design in designlist:
+        d.printSolution(design)
+    r = (v-1)/(k-1)
+    b = (v*r)/k
+    print(f'v:{v}\nb:{b}\nr:{r}\nk:{k}\nlambda:{1}')
+    """        
+    print("Nodes per level:", d.statistics.nodes)
+    print("Updates per level:", d.statistics.updates)
+    """
+
+file.close()
