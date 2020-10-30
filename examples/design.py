@@ -12,7 +12,7 @@ class DesignDLX(dlx.DLX):
 
         # Populate the columns variable.
         columns = list(pyncomb.ksubsetlex.all(v, t))
-        #print(columns)
+        # print(columns)
         # Now create the rows, one for each k-set.
         rows = [[pyncomb.ksubsetlex.rank(v, T) for T in pyncomb.ksubsetlex.all(
             pyncomb.combfuncs.createLookup(S), t)] for S in pyncomb.ksubsetlex.all(v, k)]
@@ -40,12 +40,10 @@ def solutions_list(design):
     return new_list
 
 
-design_731 = DesignDLX(2, 7, 3)
-design_931 = DesignDLX(2, 9, 3)
+design_13_4_1 = DesignDLX(2,13,4)
 
-sol_list_731 = solutions_list(design_731)
+sol_list_731 = solutions_list(design_13_4_1)
 
-print(sol_list_731)
 
 
 def permuted_list(primitive_list):
